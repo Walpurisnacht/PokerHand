@@ -97,10 +97,10 @@ class MainActivity(QWidget):
             grid.addWidget(self.boxName[x],2,x)
             grid.addWidget(self.boxType[x],3,x)
 
-        grid.setContentsMargins(60,20,50,400)
+        grid.setContentsMargins(60,20,50,30)
 
         #feature
-            #input button
+            #single input button
         self.btnSolve = QPushButton('Single input')
         self.btnSolve.resize(self.btnSolve.sizeHint())
         self.btnSolve.clicked.connect(self.solveClick)
@@ -114,11 +114,31 @@ class MainActivity(QWidget):
 
         grid.addWidget(self.btnTrain,5,0)
         
-            #input viewer
+            #single input result
         self.inp = QLabel('')
         self.inp.move(150,95)
 
         grid.addWidget(self.inp,4,1,1,4)
+
+            #multiple input button
+        self.btnMult = QPushButton('Multiple input')
+        self.btnMult.resize(self.btnMult.sizeHint())
+        self.btnMult.clicked.connect(self.multClick)
+
+        grid.addWidget(self.btnMult,5,1)
+
+            #multiple input result
+        self.teMult = QTextEdit()
+        self.teMult.setReadOnly(True)
+        self.teMult.setLineWrapMode(QTextEdit.NoWrap)
+        self.teMult.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
+
+        sb = self.teMult.verticalScrollBar()
+        sb.setValue(sb.maximum())
+
+        grid.addWidget(self.teMult,6,0,30,5)
+
+        
 
             #status bar
         #self.statusBar().showMessage('Ready')
@@ -133,6 +153,27 @@ class MainActivity(QWidget):
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
+
+    #Multiple input event handler
+    def multClick(self):
+        fname = QFileDialog.getOpenFileName(self, 'Open file')
+
+        self.setWindowTitle(fname)
+
+        #self.teMult.setPlainText(open(fname).read())
+        lines = open(fname).read().split("\n")
+        
+        result = ""
+        try:
+            for line in lines[0:]:
+                tres = clf.predict(np.array(np.fromstring(line, sep=",")))
+                result += str(tres[0])
+                result += "\n"
+        except:
+            pass
+
+        self.teMult.setPlainText(result)
+        
 
     #Train event handler
     def trainClick(self):
@@ -218,7 +259,7 @@ class MainActivity(QWidget):
 
         try:
             result = clf.predict(np.array(np.fromstring(conv, sep=",")))
-            self.inp.setText(str(result))
+            self.inp.setText(str(result[0]))
         except:
             pass
         
