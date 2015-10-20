@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import sys
 from PyQt4.QtGui import *
 from PyQt4 import QtCore
@@ -77,12 +75,11 @@ class MainActivity(QWidget):
             self.boxName[x].addItem('9')
             self.boxName[x].addItem('J')
             self.boxName[x].addItem('Q')
-            self.boxName[x].addItem('K')
-            self.boxType[x].addItem('♦')
+            self.boxName[x].addItem('K') 
             self.boxType[x].addItem('♥')
-            self.boxType[x].addItem('♣')
             self.boxType[x].addItem('♠')
-            
+            self.boxType[x].addItem('♦')
+            self.boxType[x].addItem('♣')
 
             #layout
         grid = QGridLayout()
@@ -95,12 +92,19 @@ class MainActivity(QWidget):
         grid.setContentsMargins(60,20,50,400)
 
         #feature
-            #solve button
-        self.btnSolve = QPushButton('Solve',self)
+            #input button
+        self.btnSolve = QPushButton('Single input')
         self.btnSolve.resize(self.btnSolve.sizeHint())
         self.btnSolve.clicked.connect(self.solveClick)
 
         grid.addWidget(self.btnSolve,4,0)
+
+            #training button
+        self.btnTrain = QPushButton('Training')
+        self.btnTrain.resize(self.btnTrain.sizeHint())
+        self.btnTrain.clicked.connect(self.trainClick)
+
+        grid.addWidget(self.btnTrain,5,0)
         
             #input viewer
         self.inp = QLabel('')
@@ -120,32 +124,52 @@ class MainActivity(QWidget):
         self.move(qr.topLeft())
 
     #Solve event handler
+    def trainClick(self):
+        fname = QFileDialog.getOpenFileName(self, 'Open file')
+
+        f = open(fname, 'r')
+
+        with f:
+            data = f.read()
+            self.inp.setText(data)
+        
     def solveClick(self):
         text = ""
         for x in range(5):
             if x != 4:
-                text += self.boxName[x].currentText()
                 text += self.boxType[x].currentText()
+                text += self.boxName[x].currentText()
                 text += " | "
             else:
-                text += self.boxName[x].currentText()
                 text += self.boxType[x].currentText()
+                text += self.boxName[x].currentText()
 
-        """
-        DATA CONVERTER
-        text = text.replace("A","1")
-        text = text.replace("J","11")
-        text = text.replace("Q","12")
-        text = text.replace("K","13")
+        
+        #DATA CONVERTER
+        conv = ""
+        for x in range(5):
+            if x != 4:
+                conv += self.boxType[x].currentText()
+                conv += ","
+                conv += self.boxName[x].currentText()
+                conv += ","
+            else:
+                conv += self.boxType[x].currentText()
+                conv += ","
+                conv += self.boxName[x].currentText()
+                
+        conv = conv.replace("A","1")
+        conv = conv.replace("J","11")
+        conv = conv.replace("Q","12")
+        conv = conv.replace("K","13")
 
         #TODO re-evaluate
-        text = text.replace("♦","1")
-        text = text.replace("♥","2")
-        text = text.replace("♣","3")
-        text = text.replace("♠","4")
-        """
-
-        self.inp.setText(text)
+        conv = conv.replace("♥","1")
+        conv = conv.replace("♠","2")
+        conv = conv.replace("♦","3")
+        conv = conv.replace("♣","4")
+        
+        self.inp.setText(conv + " | " + text)
         
     #Close event handler
     def closeEvent(self, event):
