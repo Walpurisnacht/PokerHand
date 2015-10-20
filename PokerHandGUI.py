@@ -1,6 +1,14 @@
 import sys
+import os
+import numpy as np
+import sklearn
 from PyQt4.QtGui import *
 from PyQt4 import QtCore
+
+from sklearn import svm
+
+#Set up ML and scikit-learn
+clf = svm.SVC(gamma=0.01, C=100)
 
 class MainActivity(QWidget):
 
@@ -111,6 +119,9 @@ class MainActivity(QWidget):
         self.inp.move(150,95)
 
         grid.addWidget(self.inp,4,1,1,4)
+
+            #status bar
+        #self.statusBar().showMessage('Ready')
         
         self.setLayout(grid)
         self.show()
@@ -123,17 +134,53 @@ class MainActivity(QWidget):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
-    #Solve event handler
+    #Train event handler
     def trainClick(self):
         fname = QFileDialog.getOpenFileName(self, 'Open file')
 
-        f = open(fname, 'r')
+        self.setWindowTitle(fname)
 
-        with f:
-            data = f.read()
-            self.inp.setText(data)
-        
+        lines = open(fname).read().split("\n")
+
+        ldata = []
+        lres = []
+
+        for line in lines[0:]:
+            text = ""
+            line = line.split(",")
+            for data in line[0:len(line)-1]:
+                text += data
+                text += ","
+            ldata.append(text[0:len(text)-1])
+            lres.append(line[len(line)-1])
+
+        """
+        QMessageBox.about(self, "Info", "Data = %s/%s\nRes = %s/%s" % (
+            ldata[0], len(ldata), lres[0], len(lres)))
+        """
+
+        #Init numpy arrays
+        digit = np.array(np.fromstring(ldata[0], sep=","))
+
+        #Parse digit
+        for line in ldata[0:]:
+            try:
+                sample = np.fromstring(line, sep=",")
+                digit = np.vstack((digit,sample))
+            except:
+                pass
+
+        #Parse target
+        t = np.array(lres)
+
+        #Train
+        x,y = digit,t
+        clf.fit(x,y)
+        QMessageBox.about(self, "Info", "Training completed!")
+
+    #Solve event handler
     def solveClick(self):
+        """
         text = ""
         for x in range(5):
             if x != 4:
@@ -143,7 +190,7 @@ class MainActivity(QWidget):
             else:
                 text += self.boxType[x].currentText()
                 text += self.boxName[x].currentText()
-
+        """
         
         #DATA CONVERTER
         conv = ""
@@ -168,8 +215,12 @@ class MainActivity(QWidget):
         conv = conv.replace("♠","2")
         conv = conv.replace("♦","3")
         conv = conv.replace("♣","4")
-        
-        self.inp.setText(conv + " | " + text)
+
+        try:
+            result = clf.predict(np.array(np.fromstring(conv, sep=",")))
+            self.inp.setText(str(result))
+        except:
+            pass
         
     #Close event handler
     def closeEvent(self, event):
