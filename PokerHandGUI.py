@@ -97,6 +97,26 @@ class MainActivity(QWidget):
             grid.addWidget(self.boxName[x],2,x)
             grid.addWidget(self.boxType[x],3,x)
 
+            #predict value
+        self.lblVal = QLabel("Prediction info")
+        grid.addWidget(self.lblVal,4,3)
+        self.boxPredict = QComboBox()
+        self.boxPredict.addItem("Nothing | 0")
+        self.boxPredict.addItem("One pair | 1")
+        self.boxPredict.addItem("Two pairs | 2")
+        self.boxPredict.addItem("Three of a kind | 3")
+        self.boxPredict.addItem("Straight | 4")
+        self.boxPredict.addItem("Flush | 5")
+        self.boxPredict.addItem("Full house | 6")
+        self.boxPredict.addItem("Four of a kind | 7")
+        self.boxPredict.addItem("Straight flush | 8")
+        self.boxPredict.addItem("Royal flush | 9")
+        grid.addWidget(self.boxPredict,5,3)
+
+        #debug
+        #QMessageBox.about(self,"Info",self.boxPredict.itemText(0))
+        #QMessageBox.about(self,"Info",str(self.boxPredict.currentIndex()))
+
         grid.setContentsMargins(60,20,50,30)
 
         #feature
@@ -160,17 +180,45 @@ class MainActivity(QWidget):
 
         self.setWindowTitle(fname)
 
-        #self.teMult.setPlainText(open(fname).read())
+        #parse file
         lines = open(fname).read().split("\n")
+
+        ldata = []
+        lres = []
+
+        for line in lines[0:]:
+            text = ""
+            line = line.split(",")
+            for data in line[:-1]:
+                text += data
+                text += ","
+            ldata.append(text[:-1])
+            lres.append(line[-1])
+
+        QMessageBox.about(self, "Info", "%s \n %s" % (ldata, lres))
         
         result = ""
         try:
-            for line in lines[0:]:
-                tres = clf.predict(np.array(np.fromstring(line, sep=",")))
+            for test in ldata[0:]:
+                tres = clf.predict(np.array(np.fromstring(test, sep=",")))
                 result += str(tres[0])
-                result += "\n"
+                if test != ldata[-1]:
+                    result += "\n"
         except:
             pass
+
+        outp = result.split("\n")
+        result = ""
+        for x in range(len(outp)):
+            result += outp[x]
+            result += " | "
+            result += lres[x]
+            result += " | "
+            if outp[x] == lres[x]:
+                result += "True"
+            else:
+                result += "False"
+            result += "\n"
 
         self.teMult.setPlainText(result)
         
@@ -189,11 +237,11 @@ class MainActivity(QWidget):
         for line in lines[0:]:
             text = ""
             line = line.split(",")
-            for data in line[0:len(line)-1]:
+            for data in line[:-1]:
                 text += data
                 text += ","
-            ldata.append(text[0:len(text)-1])
-            lres.append(line[len(line)-1])
+            ldata.append(text[:-1])
+            lres.append(line[-1])
 
         """
         QMessageBox.about(self, "Info", "Data = %s/%s\nRes = %s/%s" % (
@@ -221,17 +269,6 @@ class MainActivity(QWidget):
 
     #Solve event handler
     def solveClick(self):
-        """
-        text = ""
-        for x in range(5):
-            if x != 4:
-                text += self.boxType[x].currentText()
-                text += self.boxName[x].currentText()
-                text += " | "
-            else:
-                text += self.boxType[x].currentText()
-                text += self.boxName[x].currentText()
-        """
         
         #DATA CONVERTER
         conv = ""
@@ -259,7 +296,14 @@ class MainActivity(QWidget):
 
         try:
             result = clf.predict(np.array(np.fromstring(conv, sep=",")))
-            self.inp.setText(str(result[0]))
+
+            QMessageBox.about(self,"Info","%s | %s" %
+                              (str(result),str(self.boxPredict.currentIndex())))
+            
+            if str(result[0]) == str(self.boxPredict.currentIndex()):
+                self.inp.setText("True")
+            else:
+                self.inp.setText("False")
         except:
             pass
         
