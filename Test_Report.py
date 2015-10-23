@@ -1,6 +1,9 @@
 import sklearn
 from sklearn import svm
+from sklearn.multiclass import OneVsRestClassifier
 import numpy as np
+import cProfile
+import re
 
 # prepare dataset
 lines = open("train.csv").read().split("\n")
@@ -24,7 +27,9 @@ print(ltarget[-1])
 print(len(ltarget))
 
 # svm classification
-clf = svm.SVC(gamma=0.01, C=100)
+clf = svm.SVC(C=1000,cache_size=1000,gamma=0.1)
+#clf = svm.LinearSVC()
+print(clf)
 
 digit = np.array(np.fromstring(ldata[0],sep=","))
 
@@ -42,7 +47,7 @@ print(x[-1])
 print(len(x))
 print(y[-1])
 print(len(y))
-clf.fit(x,y)
+cProfile.run('clf.fit(x,y)')
 
 print("TRAINED")
 
@@ -79,6 +84,7 @@ for q in ldata[1:]:
     except:
         pass
 
+cProfile.run('clf.predict(questions)')
 predicted = clf.predict(questions)
         
 target_names = ['Nothing','One pair','Two pair','Three of a kind',

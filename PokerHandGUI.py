@@ -7,29 +7,28 @@ from PyQt4 import QtCore
 
 from sklearn import svm
 
-#Set up ML and scikit-learn
-clf = svm.SVC(gamma=0.01, C=100)
+# Set up ML and scikit-learn
+clf = svm.SVC(gamma=0.1, C=1000, cache_size=1000)
 
 class MainActivity(QWidget):
 
-    #constructor
+    # Constructor
     def __init__(self):
         super(MainActivity, self).__init__()
-
         self.initUI()
 
-    #init windows
+    # Init windows
     def initUI(self):
 
-        #main panel
+        # Main panel
         self.center()
         self.resize(600, 400)
 
         self.setWindowTitle('Poker Hand')
         self.setWindowIcon(QIcon('d.png'))
 
-        #selection layout
-            #label
+        # Simple input layout
+            # Label
         self.lbl1 = QLabel('Card #1')
         self.lbl2 = QLabel('Card #2')
         self.lbl3 = QLabel('Card #3')
@@ -43,7 +42,7 @@ class MainActivity(QWidget):
         boxLabel.append(self.lbl4)
         boxLabel.append(self.lbl5)
         
-            #card name
+            # Card name
         self.cbName1 = QComboBox()
         self.cbName2 = QComboBox()
         self.cbName3 = QComboBox()
@@ -57,7 +56,7 @@ class MainActivity(QWidget):
         self.boxName.append(self.cbName4)
         self.boxName.append(self.cbName5)
         
-            #card type
+            # Card type
         self.cbType1 = QComboBox()
         self.cbType2 = QComboBox()
         self.cbType3 = QComboBox()
@@ -81,6 +80,7 @@ class MainActivity(QWidget):
             self.boxName[x].addItem('7')
             self.boxName[x].addItem('8')
             self.boxName[x].addItem('9')
+            self.boxName[x].addItem('10')
             self.boxName[x].addItem('J')
             self.boxName[x].addItem('Q')
             self.boxName[x].addItem('K') 
@@ -89,7 +89,7 @@ class MainActivity(QWidget):
             self.boxType[x].addItem('♦')
             self.boxType[x].addItem('♣')
 
-            #layout
+            # Layout
         grid = QGridLayout()
 
         for x in range(5):
@@ -97,7 +97,7 @@ class MainActivity(QWidget):
             grid.addWidget(self.boxName[x],2,x)
             grid.addWidget(self.boxType[x],3,x)
 
-            #predict value
+            # Predict value info
         self.lblVal = QLabel("Prediction info")
         grid.addWidget(self.lblVal,4,3)
         self.boxPredict = QComboBox()
@@ -119,35 +119,35 @@ class MainActivity(QWidget):
 
         grid.setContentsMargins(60,20,50,30)
 
-        #feature
-            #single input button
+        # Feature
+            # Single input button
         self.btnSolve = QPushButton('Single input')
         self.btnSolve.resize(self.btnSolve.sizeHint())
         self.btnSolve.clicked.connect(self.solveClick)
 
         grid.addWidget(self.btnSolve,4,0)
 
-            #training button
+            # Training button
         self.btnTrain = QPushButton('Training')
         self.btnTrain.resize(self.btnTrain.sizeHint())
         self.btnTrain.clicked.connect(self.trainClick)
 
         grid.addWidget(self.btnTrain,5,0)
         
-            #single input result
+            # Single input result
         self.inp = QLabel('')
         self.inp.move(150,95)
 
         grid.addWidget(self.inp,4,1,1,4)
 
-            #multiple input button
+            # Multiple input button
         self.btnMult = QPushButton('Multiple input')
         self.btnMult.resize(self.btnMult.sizeHint())
         self.btnMult.clicked.connect(self.multClick)
 
         grid.addWidget(self.btnMult,5,1)
 
-            #multiple input result
+            # Multiple input result
         self.teMult = QTextEdit()
         self.teMult.setReadOnly(True)
         self.teMult.setLineWrapMode(QTextEdit.NoWrap)
@@ -158,15 +158,24 @@ class MainActivity(QWidget):
 
         grid.addWidget(self.teMult,6,0,30,5)
 
-        
+            # Report section
+        self.lblRp = QLabel("Report")
+        grid.addWidget(self.lblRp,37,0)
 
-            #status bar
-        #self.statusBar().showMessage('Ready')
+        self.teRp = QTextEdit()
+        self.teRp.setReadOnly(True)
+        self.teRp.setLineWrapMode(QTextEdit.NoWrap)
+        self.teRp.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
+
+        rsb = self.teRp.verticalScrollBar()
+        rsb.setValue(rsb.maximum())
+
+        grid.addWidget(self.teRp,38,0,20,5)
         
         self.setLayout(grid)
         self.show()
 
-    #set window at center
+    # Set window at center
     def center(self):
 
         qr = self.frameGeometry()
@@ -174,56 +183,67 @@ class MainActivity(QWidget):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
-    #Multiple input event handler
+    # Multiple input event handler
     def multClick(self):
         fname = QFileDialog.getOpenFileName(self, 'Open file')
 
-        self.setWindowTitle(fname)
+        #self.setWindowTitle(fname)
 
-        #parse file
+        # Parse file
         lines = open(fname).read().split("\n")
 
         ldata = []
         lres = []
 
-        for line in lines[0:]:
+        for line in lines:
             text = ""
             line = line.split(",")
             for data in line[:-1]:
                 text += data
                 text += ","
-            ldata.append(text[:-1])
-            lres.append(line[-1])
+            if text != "":
+                ldata.append(text[:-1])
+                lres.append(line[-1])
 
-        QMessageBox.about(self, "Info", "%s \n %s" % (ldata, lres))
+        #QMessageBox.about(self, "Info", "Data: %s \nTarget: %s" % (len(ldata), len(lres)))
         
         result = ""
-        try:
-            for test in ldata[0:]:
-                tres = clf.predict(np.array(np.fromstring(test, sep=",")))
-                result += str(tres[0])
-                if test != ldata[-1]:
-                    result += "\n"
-        except:
-            pass
+        
+        # Predict
+        questions = np.array(np.fromstring(ldata[0],sep=","))
+        answers = np.array(lres)
 
-        outp = result.split("\n")
-        result = ""
-        for x in range(len(outp)):
-            result += outp[x]
-            result += " | "
-            result += lres[x]
-            result += " | "
-            if outp[x] == lres[x]:
-                result += "True"
-            else:
-                result += "False"
-            result += "\n"
+        for q in ldata[1:]:
+            try:
+                q1 = np.fromstring(q,sep=",")
+                questions = np.vstack((questions,q1))
+            except:
+                pass
+
+        predicted = clf.predict(questions)
+
+        #QMessageBox.about(self, "Info", "%s %s" % (str(predicted[0]),str(answers[0])))
+
+        for x in range(len(predicted)):
+            try:
+                if answers[x] == predicted[x]:
+                    result += str(predicted[x])
+                    result += "\tTrue\n"
+                else:
+                    result += str(predicted[x])
+                    result += "\tFalse\n"
+            except:
+                pass
 
         self.teMult.setPlainText(result)
+
+        result = ""
+        
+        # Report
+        self.teRp.setPlainText(sklearn.metrics.classification_report(answers,predicted))
         
 
-    #Train event handler
+    # Train event handler
     def trainClick(self):
         fname = QFileDialog.getOpenFileName(self, 'Open file')
 
@@ -234,44 +254,46 @@ class MainActivity(QWidget):
         ldata = []
         lres = []
 
-        for line in lines[0:]:
+        for line in lines:
             text = ""
             line = line.split(",")
             for data in line[:-1]:
                 text += data
                 text += ","
-            ldata.append(text[:-1])
-            lres.append(line[-1])
+            if text != "":
+                ldata.append(text[:-1])
+                lres.append(line[-1])
 
-        """
-        QMessageBox.about(self, "Info", "Data = %s/%s\nRes = %s/%s" % (
-            ldata[0], len(ldata), lres[0], len(lres)))
-        """
+        
+        #QMessageBox.about(self, "Info", "Data = %s/%s\nRes = %s/%s" % (
+        #    ldata[0], len(ldata), lres[0], len(lres)))
+        
 
-        #Init numpy arrays
+        # Init numpy arrays
         digit = np.array(np.fromstring(ldata[0], sep=","))
 
-        #Parse digit
-        for line in ldata[0:]:
+        # Parse digit
+        for line in ldata[1:]:
             try:
                 sample = np.fromstring(line, sep=",")
                 digit = np.vstack((digit,sample))
             except:
                 pass
 
-        #Parse target
+        # Parse target
         t = np.array(lres)
 
-        #Train
+        # Train
         x,y = digit,t
         clf.fit(x,y)
         QMessageBox.about(self, "Info", "Training completed!")
 
-    #Solve event handler
+    # Solve event handler
     def solveClick(self):
         
-        #DATA CONVERTER
+        # Input converter
         conv = ""
+        
         for x in range(5):
             if x != 4:
                 conv += self.boxType[x].currentText()
@@ -287,8 +309,6 @@ class MainActivity(QWidget):
         conv = conv.replace("J","11")
         conv = conv.replace("Q","12")
         conv = conv.replace("K","13")
-
-        #TODO re-evaluate
         conv = conv.replace("♥","1")
         conv = conv.replace("♠","2")
         conv = conv.replace("♦","3")
@@ -297,17 +317,17 @@ class MainActivity(QWidget):
         try:
             result = clf.predict(np.array(np.fromstring(conv, sep=",")))
 
-            QMessageBox.about(self,"Info","%s | %s" %
-                              (str(result),str(self.boxPredict.currentIndex())))
+            #QMessageBox.about(self,"Info","%s | %s" %
+            #                  (str(result),str(self.boxPredict.currentIndex())))
             
             if str(result[0]) == str(self.boxPredict.currentIndex()):
                 self.inp.setText("True")
             else:
-                self.inp.setText("False")
+                self.inp.setText("False")          
         except:
             pass
         
-    #Close event handler
+    # Close event handler
     def closeEvent(self, event):
 
         rep = QMessageBox.question(self, 'Confirmation',
