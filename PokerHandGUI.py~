@@ -1,6 +1,8 @@
 import sys
+import os
 import numpy as np
 import sklearn
+import cProfile
 from PyQt4.QtGui import *
 from PyQt4 import QtCore
 
@@ -224,16 +226,14 @@ class MainActivity(QWidget):
         #QMessageBox.about(self, "Info", "%s %s" % (str(predicted[0]),str(answers[0])))
 
         for x in range(len(predicted)):
+            try:
                 if answers[x] == predicted[x]:
                     result += str(predicted[x])
-                    result += "\t"
-                    result += str(answers[x])
                     result += "\tTrue\n"
                 else:
                     result += str(predicted[x])
-                    result += "\t"
-                    result += str(answers[x])
                     result += "\tFalse\n"
+            except:
                 pass
 
         self.teMult.setPlainText(result)
@@ -286,7 +286,7 @@ class MainActivity(QWidget):
 
         # Train
         x,y = digit,t
-        clf.fit(x,y)
+        cProfile.run('clf.fit(x,y)')
         QMessageBox.about(self, "Info", "Training completed!")
 
     # Solve event handler
@@ -322,11 +322,9 @@ class MainActivity(QWidget):
             #                  (str(result),str(self.boxPredict.currentIndex())))
             
             if str(result[0]) == str(self.boxPredict.currentIndex()):
-                self.inp.setText(str(self.boxPredict.currentIndex())
-                                 + " " + str(result[0]) + " True") 
+                self.inp.setText("True")
             else:
-                self.inp.setText(str(self.boxPredict.currentIndex())
-                                 + " " + str(result[0]) + " False")          
+                self.inp.setText("False")          
         except:
             pass
         
